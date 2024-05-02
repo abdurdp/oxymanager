@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -49,17 +50,17 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.network('https://oxymanager.com/static/images/logo.png', width: 250, height: 150),
-            const SizedBox(height: 20), // Loading indicator
-          ],
+      body:  Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(child: Image.asset('assets/images/splash.jpg',fit: BoxFit.fill,)),
+            ],
+          ),
         ),
-      ),
     );
   }
+
 }
 
 class OxyManagerWebView extends StatefulWidget {
@@ -94,32 +95,38 @@ class _OxyManagerWebViewState extends State<OxyManagerWebView> {
       },
       child: SafeArea(
         child: Scaffold(
-          body: Stack(
-            children: <Widget>[
-              WebView(
-                initialUrl: 'https://oxymanager.com/dashboard/overview',
-                javascriptMode: JavascriptMode.unrestricted,
-                onPageFinished: (String url) {
-                  setState(() {
-                    _isLoadingPage = false;
-                  });
-                  // Inject JavaScript to set initial scale to 100%
-                  String script = 'document.querySelector(\'meta[name="viewport"]\').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");';
-                  _controller.evaluateJavascript(script);
+          body: RefreshIndicator(
+            onRefresh: _pullRefresh,
+            child: Stack(
+              children: <Widget>[
+                WebView(
+                  initialUrl: 'https://oxymanager.com/dashboard/overview',
+                  javascriptMode: JavascriptMode.unrestricted,
+                  onPageFinished: (String url) {
+                    setState(() {
+                      _isLoadingPage = false;
+                    });
+                    // Inject JavaScript to set initial scale to 100%
+                    String script = 'document.querySelector(\'meta[name="viewport"]\').setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");';
+                    _controller.evaluateJavascript(script);
 
-                },
-                onWebViewCreated: (WebViewController webViewController) {
-                  _controller = webViewController;
-                },
-              ),
-              if (_isLoadingPage)
-                const Center(
-                  child: CircularProgressIndicator(color: Colors.orange,),
+                  },
+                  onWebViewCreated: (WebViewController webViewController) {
+                    _controller = webViewController;
+                  },
                 ),
-            ],
+                if (_isLoadingPage)
+                  const Center(
+                    child: CircularProgressIndicator(color: Colors.orange,),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+  Future<void> _pullRefresh() async {
+   await  _controller.reload();
   }
 }
